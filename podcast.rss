@@ -11,6 +11,8 @@
       <guid isPermaLink="true">[republik-feeder-podcast.cloudflare-a-3df.workers.dev]cmVwdWJsaWsvdGVtcGxhdGUtYmluc3dhbmdlci1kZW1va3JhdGlzY2hlci1mYXNjaGlzbXVzLzhkNDU0ZmNiLWMyMDgtNDRhZC1hYmQ4LThkODllNGY2M2QyMC92MQ==</guid>
       <pubDate>2026-02-14T03:47:00Z</pubDate>
       <description/>
+      <enclosure url="https://cdn.repub.ch/s3/republik-assets/tts/28d0d853-497b-4bb6-911f-46cf2fbda61d/20ef770fc496e2f953d8d4789b3154388c9fddce579194fc47f8d9de8553cef6.mp3" length="0" type="audio/mpeg"/>
+      <itunes:duration>11</itunes:duration>
     </item>
     <item>
       <title>«Hoffnung ist kein Wunsch­denken»</title>
@@ -18,6 +20,8 @@
       <guid isPermaLink="true">[republik-feeder-podcast.cloudflare-a-3df.workers.dev]cmVwdWJsaWsvYXJ0aWNsZS1kaWUtaG9mZm51bmctZGVyLXVrcmFpbmVyaW5uZW4vMjc0OTE2MzEtODY2NS00ZmJkLTgwOTYtN2YxNGY5YzZkY2RkL3Yy</guid>
       <pubDate>2026-02-16T03:50:00Z</pubDate>
       <description/>
+      <enclosure url="https://cdn.repub.ch/s3/republik-assets/tts/ff65866b-ff1e-48c6-96d3-e7799cffd07a/be49a7b8796b35ebc528c6f0db7489ddf0ede9efbcdef505ebf4d35be7324aa9.mp3" length="0" type="audio/mpeg"/>
+      <itunes:duration>13</itunes:duration>
     </item>
   </channel>
 </rss>
