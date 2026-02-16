@@ -1,7 +1,7 @@
 name: Update RSS
 on:
   schedule:
-    - cron: '0 * * * *'  # stündlich
+    - cron: '*/15 * * * *'  # alle 15 Minuten
   workflow_dispatch:
 jobs:
   update:
