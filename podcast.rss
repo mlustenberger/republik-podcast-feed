@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
+  <channel>
+    <title>Republik</title>
+    <link>https://reederapp.net/fv-EicT8SqiraESmO1YElA</link>
+    <description>Podcasts from Republik</description>
+    <language>de-CH</language>
+    <item>
+      <title>Demokratischer Faschismus</title>
+      <link>https://www.republik.ch/2026/02/14/binswanger-demokratischer-faschismus</link>
+      <guid isPermaLink="true">[republik-feeder-podcast.cloudflare-a-3df.workers.dev]cmVwdWJsaWsvdGVtcGxhdGUtYmluc3dhbmdlci1kZW1va3JhdGlzY2hlci1mYXNjaGlzbXVzLzhkNDU0ZmNiLWMyMDgtNDRhZC1hYmQ4LThkODllNGY2M2QyMC92MQ==</guid>
+      <pubDate>2026-02-14T03:47:00Z</pubDate>
+      <description/>
+    </item>
+    <item>
+      <title>«Hoffnung ist kein Wunsch­denken»</title>
+      <link>https://www.republik.ch/2026/02/16/oleksandra-matwijtschuk-hoffnung-ist-kein-wunschdenken</link>
+      <guid isPermaLink="true">[republik-feeder-podcast.cloudflare-a-3df.workers.dev]cmVwdWJsaWsvYXJ0aWNsZS1kaWUtaG9mZm51bmctZGVyLXVrcmFpbmVyaW5uZW4vMjc0OTE2MzEtODY2NS00ZmJkLTgwOTYtN2YxNGY5YzZkY2RkL3Yy</guid>
+      <pubDate>2026-02-16T03:50:00Z</pubDate>
+      <description/>
+    </item>
+  </channel>
+</rss>
+
