@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: update-rss
+  cancel-in-progress: true
+
 jobs:
   convert:
     runs-on: ubuntu-latest
@@ -20,14 +24,25 @@ jobs:
         run: |
           set -e
           URL="https://reederapp.net/fv-EicT8SqiraESmO1YElA.json"
-          curl -LfsS --retry 3 --retry-delay 2 "$URL" -o reeder-feed.json || {
+
+          # --compressed entpackt gzip/deflate/br automatisch, falls der Server Content-Encoding nutzt
+          curl -LfsS --compressed --retry 3 --retry-delay 2 "$URL" -o reeder-feed.json || {
             echo "Reeder JSON nicht erreichbar; ueberspringe."
             exit 0
           }
+
           if [ ! -s reeder-feed.json ]; then
             echo "Reeder JSON ist leer; ueberspringe."
             exit 0
           fi
+
+          # Quick sanity check: muss JSON sein
+          python3 - <<'PY'
+          import json
+          with open('reeder-feed.json', 'r', encoding='utf-8') as f:
+              json.load(f)
+          print('JSON OK')
+          PY
 
       - name: Build RSS
         run: |
@@ -50,7 +65,7 @@ jobs:
               except Exception:
                   return s
 
-          def text(el, tag, value):
+          def add(el, tag, value):
               child = ET.SubElement(el, tag)
               child.text = value if value is not None else ""
               return child
@@ -62,16 +77,16 @@ jobs:
           rss.set("xmlns:itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
 
           channel = ET.SubElement(rss, "channel")
-          text(channel, "title", data.get("title", "Republik Podcast"))
-          text(channel, "link", data.get("home_page_url", "https://reederapp.net/fv-EicT8SqiraESmO1YElA"))
-          text(channel, "description", "Custom Feed (generiert aus Reeder JSON)")
-          text(channel, "language", "de-CH")
+          add(channel, "title", data.get("title", "Republik Podcast"))
+          add(channel, "link", data.get("home_page_url", "https://reederapp.net/fv-EicT8SqiraESmO1YElA"))
+          add(channel, "description", "Custom Feed (generiert aus Reeder JSON)")
+          add(channel, "language", "de-CH")
 
-          items = data.get("items", [])
+          items = data.get("items", []) or []
           for it in items[:50]:
               item = ET.SubElement(channel, "item")
-              text(item, "title", it.get("title", ""))
-              text(item, "link", it.get("url", ""))
+              add(item, "title", it.get("title", ""))
+              add(item, "link", it.get("url", ""))
 
               guid_val = it.get("id") or it.get("url") or ""
               guid = ET.SubElement(item, "guid", {"isPermaLink": "false"})
@@ -79,8 +94,9 @@ jobs:
 
               pub = iso_to_rfc2822(it.get("date_published", ""))
               if pub:
-                  text(item, "pubDate", pub)
+                  add(item, "pubDate", pub)
 
+              # Reeder media (Audio)
               reeder = it.get("_reeder", {}) or {}
               media = reeder.get("media", []) or []
               if media:
@@ -99,12 +115,13 @@ jobs:
                       h = secs // 3600
                       m = (secs % 3600) // 60
                       s = secs % 60
-                      text(item, "itunes:duration", f"{h}:{m:02d}:{s:02d}" if h else f"{m}:{s:02d}")
+                      add(item, "itunes:duration", f"{h}:{m:02d}:{s:02d}" if h else f"{m}:{s:02d}")
 
+              # Optional text
               content = it.get("content_text") or it.get("summary") or ""
               if content:
                   content = re.sub(r"\s+", " ", content).strip()[:2000]
-                  text(item, "description", content)
+                  add(item, "description", content)
 
           xml_bytes = ET.tostring(rss, encoding="utf-8", xml_declaration=True)
           with open("podcast.rss", "wb") as f:
@@ -120,6 +137,7 @@ jobs:
             echo "Keine Aenderung an podcast.rss"
             exit 0
           fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Auto-update podcast.rss"
