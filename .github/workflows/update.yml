@@ -4,11 +4,4 @@ on:
     - cron: '0 * * * *'  # stündlich
   workflow_dispatch:  # manuell trigger
 jobs:
-  convert:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Download Reeder JSON
-      run: curl "https://reederapp.net/fv-EicT8SqiraESmO1YElA.json" > reeder-feed.json
-    - name: Convert to RSS
-      run
+  convert
