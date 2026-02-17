@@ -1,10 +1,126 @@
 name: Update RSS
+
 on:
   schedule:
     - cron: '*/15 * * * *'  # alle 15 Minuten
-  workflow_dispatch:  # manuell trigger
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
 jobs:
   convert:
     runs-on: ubuntu-latest
+
     steps:
-    - uses
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Reeder JSON
+        run: |
+          set -e
+          URL="https://reederapp.net/fv-EicT8SqiraESmO1YElA.json"
+          curl -LfsS --retry 3 --retry-delay 2 "$URL" -o reeder-feed.json || {
+            echo "Reeder JSON nicht erreichbar; ueberspringe."
+            exit 0
+          }
+          if [ ! -s reeder-feed.json ]; then
+            echo "Reeder JSON ist leer; ueberspringe."
+            exit 0
+          fi
+
+      - name: Build RSS
+        run: |
+          cat > convert.py << 'PY'
+          import json
+          import re
+          import xml.etree.ElementTree as ET
+          from datetime import datetime, timezone
+          from email.utils import format_datetime
+
+          def iso_to_rfc2822(s: str) -> str:
+              if not s:
+                  return ""
+              s = s.replace("Z", "+00:00")
+              try:
+                  dt = datetime.fromisoformat(s)
+                  if dt.tzinfo is None:
+                      dt = dt.replace(tzinfo=timezone.utc)
+                  return format_datetime(dt)
+              except Exception:
+                  return s
+
+          def text(el, tag, value):
+              child = ET.SubElement(el, tag)
+              child.text = value if value is not None else ""
+              return child
+
+          with open("reeder-feed.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          rss = ET.Element("rss", {"version": "2.0"})
+          rss.set("xmlns:itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
+
+          channel = ET.SubElement(rss, "channel")
+          text(channel, "title", data.get("title", "Republik Podcast"))
+          text(channel, "link", data.get("home_page_url", "https://reederapp.net/fv-EicT8SqiraESmO1YElA"))
+          text(channel, "description", "Custom Feed (generiert aus Reeder JSON)")
+          text(channel, "language", "de-CH")
+
+          items = data.get("items", [])
+          for it in items[:50]:
+              item = ET.SubElement(channel, "item")
+              text(item, "title", it.get("title", ""))
+              text(item, "link", it.get("url", ""))
+
+              guid_val = it.get("id") or it.get("url") or ""
+              guid = ET.SubElement(item, "guid", {"isPermaLink": "false"})
+              guid.text = guid_val
+
+              pub = iso_to_rfc2822(it.get("date_published", ""))
+              if pub:
+                  text(item, "pubDate", pub)
+
+              reeder = it.get("_reeder", {}) or {}
+              media = reeder.get("media", []) or []
+              if media:
+                  m0 = media[0] or {}
+                  url = m0.get("url")
+                  if url:
+                      enc = ET.SubElement(item, "enclosure")
+                      enc.set("url", url)
+                      enc.set("type", m0.get("mime_type", "audio/mpeg"))
+                      size = m0.get("size_in_bytes")
+                      enc.set("length", str(size if isinstance(size, int) else 0))
+
+                  dur = m0.get("duration")
+                  if isinstance(dur, (int, float)) and dur > 0:
+                      secs = int(dur)
+                      h = secs // 3600
+                      m = (secs % 3600) // 60
+                      s = secs % 60
+                      text(item, "itunes:duration", f"{h}:{m:02d}:{s:02d}" if h else f"{m}:{s:02d}")
+
+              content = it.get("content_text") or it.get("summary") or ""
+              if content:
+                  content = re.sub(r"\s+", " ", content).strip()[:2000]
+                  text(item, "description", content)
+
+          xml_bytes = ET.tostring(rss, encoding="utf-8", xml_declaration=True)
+          with open("podcast.rss", "wb") as f:
+              f.write(xml_bytes)
+          PY
+
+          python3 convert.py
+
+      - name: Commit changes (only if needed)
+        run: |
+          git add podcast.rss
+          if git diff --staged --quiet; then
+            echo "Keine Aenderung an podcast.rss"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Auto-update podcast.rss"
+          git push
